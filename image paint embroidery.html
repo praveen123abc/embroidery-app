@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image to Paint & DST Embroidery Converter</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f1f5f9;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+      color: #1e293b;
+      font-size: 24px;
+      text-align: center;
+    }
+
+    p {
+      color: #64748b;
+      margin-bottom: 15px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      margin-bottom: 15px;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .tool-group {
+      display: flex;
+      gap: 6px;
+      border-right: 2px solid #e2e8f0;
+      padding-right: 12px;
+    }
+
+    .upload-box {
+      background: #eff6ff;
+      border: 1px dashed #2563eb;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1d4ed8;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    canvas {
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      cursor: crosshair;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      touch-action: none;
+      max-width: 100%;
+      height: auto;
+    }
+
+    button {
+      padding: 8px 14px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s ease-in-out;
+    }
+
+    button:hover { background: #f8fafc; }
+
+    button.active {
+      background: #2563eb;
+      color: white;
+      border-color: #2563eb;
+    }
+
+    .btn-clear { background: #ef4444; color: white; border: none; }
+    .btn-clear:hover { background: #dc2626; }
+
+    .btn-png { background: #0284c7; color: white; border: none; }
+    .btn-png:hover { background: #0369a1; }
+
+    .btn-dst { background: #16a34a; color: white; border: none; font-size: 14px; padding: 10px 18px; }
+    .btn-dst:hover { background: #15803d; }
+
+    label {
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #334155;
+      font-weight: 600;
+    }
+
+    input[type="color"] {
+      border: none;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      background: none;
+    }
+
+    .status-msg {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #16a34a;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🖼️ Image to Paint & DST Embroidery Studio</h1>
+  <p>Image ni upload chesi Auto-Paint Strokes loki marchandi ledha trace chestu DST File ga save cheskondi.</p>
+
+  <div class="toolbar">
+    <!-- Image Upload -->
+    <label class="upload-box">
+      📁 Upload Image
+      <input type="file" id="imageLoader" accept="image/*" style="display:none;">
+    </label>
+
+    <!-- Auto Trace Sensitivity -->
+    <label>
+      Sensitivity:
+      <input type="range" id="thresholdSlider" min="50" max="220" value="130">
+    </label>
+
+    <!-- Drawing Tools -->
+    <div class="tool-group">
+      <button id="toolBrush" class="active">✏️ Brush</button>
+      <button id="toolLine">📏 Line</button>
+      <button id="toolBox">🔲 Box</button>
+      <button id="toolCircle">⭕ Circle</button>
+    </div>
+
+    <!-- Color & Size -->
+    <label>
+      Color:
+      <input type="color" id="colorPicker" value="#000000">
+    </label>
+
+    <label>
+      Size:
+      <input type="range" id="brushSize" min="1" max="25" value="4">
+      <span id="sizeDisplay">4px</span>
+    </label>
+
+    <!-- Actions -->
+    <button class="btn-clear" id="clearBtn">🗑️ Clear Canvas</button>
+    <button class="btn-png" id="savePngBtn">🖼️ Export PNG</button>
+    <button class="btn-dst" id="saveDstBtn">🧵 Export DST Embroidery</button>
+  </div>
+
+  <!-- Canvas -->
+  <canvas id="paintCanvas" width="800" height="500"></canvas>
+  <div id="status" class="status-msg"></div>
+
+  <script>
+    const canvas = document.getElementById('paintCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const statusDiv = document.getElementById('status');
+
+    const imageLoader = document.getElementById('imageLoader');
+    const thresholdSlider = document.getElementById('thresholdSlider');
+
+    const toolBrush = document.getElementById('toolBrush');
+    const toolLine = document.getElementById('toolLine');
+    const toolBox = document.getElementById('toolBox');
+    const toolCircle = document.getElementById('toolCircle');
+
+    const colorPicker = document.getElementById('colorPicker');
+    const brushSize = document.getElementById('brushSize');
+    const sizeDisplay = document.getElementById('sizeDisplay');
+
+    const clearBtn = document.getElementById('clearBtn');
+    const savePngBtn = document.getElementById('savePngBtn');
+    const saveDstBtn = document.getElementById('saveDstBtn');
+
+    let currentTool = 'brush';
+    let isDrawing = false;
+    let startX = 0, startY = 0;
+    let canvasSnapshot = null;
+
+    let strokes = [];
+    let currentStroke = [];
+    let loadedImage = null;
+
+    function setCanvasBackground() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    setCanvasBackground();
+
+    const tools = [toolBrush, toolLine, toolBox, toolCircle];
+    function setActiveTool(selectedBtn, toolName) {
+      tools.forEach(btn => btn.classList.remove('active'));
+      selectedBtn.classList.add('active');
+      currentTool = toolName;
+    }
+
+    toolBrush.addEventListener('click', () => setActiveTool(toolBrush, 'brush'));
+    toolLine.addEventListener('click', () => setActiveTool(toolLine, 'line'));
+    toolBox.addEventListener('click', () => setActiveTool(toolBox, 'box'));
+    toolCircle.addEventListener('click', () => setActiveTool(toolCircle, 'circle'));
+
+    brushSize.addEventListener('input', (e) => {
+      sizeDisplay.textContent = e.target.value + 'px';
+    });
+
+    // Image Upload & Conversion Logic
+    imageLoader.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        loadedImage = new Image();
+        loadedImage.onload = () => {
+          convertImageToPaintStrokes();
+        };
+        loadedImage.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    thresholdSlider.addEventListener('change', () => {
+      if (loadedImage) convertImageToPaintStrokes();
+    });
+
+    function convertImageToPaintStrokes() {
+      if (!loadedImage) return;
+
+      setCanvasBackground();
+      strokes = [];
+
+      const maxW = canvas.width - 40;
+      const maxH = canvas.height - 40;
+      let w = loadedImage.width;
+      let h = loadedImage.height;
+
+      const ratio = Math.min(maxW / w, maxH / h);
+      w *= ratio;
+      h *= ratio;
+
+      const offsetX = (canvas.width - w) / 2;
+      const offsetY = (canvas.height - h) / 2;
+
+      ctx.drawImage(loadedImage, offsetX, offsetY, w, h);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+
+      const threshold = parseInt(thresholdSlider.value);
+      let edgeMap = [];
+
+      for (let y = 0; y < canvas.height; y += 3) {
+        for (let x = 0; x < canvas.width; x += 3) {
+          let idx = (y * canvas.width + x) * 4;
+          let r = data[idx], g = data[idx+1], b = data[idx+2], a = data[idx+3];
+          let brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+
+          if (a > 100 && brightness < threshold) {
+            edgeMap.push({ x: x, y: y, visited: false });
+          }
+        }
+      }
+
+      let vectorStrokes = [];
+      const searchRadius = 8;
+
+      for (let i = 0; i < edgeMap.length; i++) {
+        if (edgeMap[i].visited) continue;
+
+        let stroke = [ { x: edgeMap[i].x, y: edgeMap[i].y } ];
+        edgeMap[i].visited = true;
+
+        let curr = edgeMap[i];
+        let found = true;
+
+        while (found) {
+          found = false;
+          let nearestIdx = -1;
+          let minDist = searchRadius;
+
+          for (let j = 0; j < edgeMap.length; j++) {
+            if (edgeMap[j].visited) continue;
+            let d = Math.hypot(edgeMap[j].x - curr.x, edgeMap[j].y - curr.y);
+            if (d < minDist) {
+              minDist = d;
+              nearestIdx = j;
+            }
+          }
+
+          if (nearestIdx !== -1) {
+            edgeMap[nearestIdx].visited = true;
+            curr = edgeMap[nearestIdx];
+            stroke.push({ x: curr.x, y: curr.y });
+            found = true;
+          }
+        }
+
+        if (stroke.length >= 2) {
+          vectorStrokes.push(resamplePath(stroke, 3));
+        }
+      }
+
+      setCanvasBackground();
+      ctx.strokeStyle = colorPicker.value;
+      ctx.lineWidth = brushSize.value;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      for (let s of vectorStrokes) {
+        if (s.length < 2) continue;
+        ctx.beginPath();
+        ctx.moveTo(s[0].x, s[0].y);
+        for (let pt of s) {
+          ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+      }
+
+      strokes = vectorStrokes;
+      statusDiv.textContent = `✅ Image Paint File ga sariikga Load ayindi! (Strokes: ${strokes.length})`;
+    }
+
+    function getCoords(e) {
+      if (!e) return { x: startX || 0, y: startY || 0 };
+      const rect = canvas.getBoundingClientRect();
+      let clientX, clientY;
+
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else if (e.changedTouches && e.changedTouches.length > 0) {
+        clientX = e.changedTouches[0].clientX;
+        clientY = e.changedTouches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      if (clientX === undefined || clientY === undefined) {
+        return { x: startX || 0, y: startY || 0 };
+      }
+
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    function resamplePath(points, spacing = 3) {
+      if (!points || points.length === 0) return [];
+      if (points.length === 1) {
+        return [points[0], { x: points[0].x + 0.5, y: points[0].y + 0.5 }];
+      }
+
+      let resampled = [points[0]];
+      let lastPt = points[0];
+
+      for (let i = 1; i < points.length; i++) {
+        let currPt = points[i];
+        let dist = Math.hypot(currPt.x - lastPt.x, currPt.y - lastPt.y);
+
+        if (dist >= spacing) {
+          let steps = Math.floor(dist / spacing);
+          for (let s = 1; s <= steps; s++) {
+            let t = s / steps;
+            let interpolated = {
+              x: lastPt.x + t * (currPt.x - lastPt.x),
+              y: lastPt.y + t * (currPt.y - lastPt.y)
+            };
+            resampled.push(interpolated);
+          }
+          lastPt = resampled[resampled.length - 1];
+        }
+      }
+      return resampled;
+    }
+
+    function drawShapeOnCtx(targetCtx, tool, x1, y1, x2, y2) {
+      targetCtx.lineWidth = brushSize.value;
+      targetCtx.lineCap = 'round';
+      targetCtx.lineJoin = 'round';
+      targetCtx.strokeStyle = colorPicker.value;
+      targetCtx.beginPath();
+
+      if (tool === 'line') {
+        targetCtx.moveTo(x1, y1);
+        targetCtx.lineTo(x2, y2);
+      } else if (tool === 'box') {
+        targetCtx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+      } else if (tool === 'circle') {
+        let radius = Math.hypot(x2 - x1, y2 - y1);
+        targetCtx.arc(x1, y1, radius, 0, 2 * Math.PI);
+      }
+      targetCtx.stroke();
+    }
+
+    function generateShapePoints(tool, x1, y1, x2, y2) {
+      let rawPoints = [];
+      if (tool === 'line') {
+        rawPoints = [{x: x1, y: y1}, {x: x2, y: y2}];
+      } else if (tool === 'box') {
+        rawPoints = [
+          {x: x1, y: y1}, {x: x2, y: y1},
+          {x: x2, y: y2}, {x: x1, y: y2},
+          {x: x1, y: y1}
+        ];
+      } else if (tool === 'circle') {
+        let radius = Math.hypot(x2 - x1, y2 - y1);
+        let circumference = 2 * Math.PI * radius;
+        let count = Math.max(Math.ceil(circumference / 3), 12);
+        for (let i = 0; i <= count; i++) {
+          let angle = (i / count) * 2 * Math.PI;
+          rawPoints.push({
+            x: x1 + radius * Math.cos(angle),
+            y: y1 + radius * Math.sin(angle)
+          });
+        }
+      }
+      return resamplePath(rawPoints, 3);
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const pt = getCoords(e);
+      startX = pt.x;
+      startY = pt.y;
+
+      canvasSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      if (currentTool === 'brush') {
+        currentStroke = [pt];
+        ctx.lineWidth = brushSize.value;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = colorPicker.value;
+        ctx.beginPath();
+        ctx.moveTo(pt.x, pt.y);
+      }
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const pt = getCoords(e);
+
+      if (currentTool === 'brush') {
+        currentStroke.push(pt);
+        ctx.lineTo(pt.x, pt.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(pt.x, pt.y);
+      } else {
+        ctx.putImageData(canvasSnapshot, 0, 0);
+        drawShapeOnCtx(ctx, currentTool, startX, startY, pt.x, pt.y);
+      }
+    }
+
+    function stopDrawing(e) {
+      if (!isDrawing) return;
+      isDrawing = false;
+
+      let pt = getCoords(e);
+
+      if (currentTool === 'brush') {
+        if (currentStroke.length === 0) {
+          currentStroke.push({ x: startX, y: startY });
+        }
+        let resampled = resamplePath(currentStroke, 3);
+        if (resampled.length > 0) {
+          strokes.push(resampled);
+        }
+        currentStroke = [];
+      } else {
+        if (canvasSnapshot) ctx.putImageData(canvasSnapshot, 0, 0);
+        drawShapeOnCtx(ctx, currentTool, startX, startY, pt.x, pt.y);
+
+        let shapeStrokes = generateShapePoints(currentTool, startX, startY, pt.x, pt.y);
+        if (shapeStrokes.length > 0) {
+          strokes.push(shapeStrokes);
+        }
+      }
+      ctx.beginPath();
+      statusDiv.textContent = `✨ Canvas pai painting save ayindi! (Strokes: ${strokes.length})`;
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
+    canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(e); }, {passive: false});
+
+    clearBtn.addEventListener('click', () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setCanvasBackground();
+      strokes = [];
+      currentStroke = [];
+      loadedImage = null;
+      statusDiv.textContent = "🗑️ Canvas clear cheyabadindi.";
+    });
+
+    savePngBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'converted_drawing.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+
+    function getBalancedTernary(n) {
+      let coef = {1:0, 3:0, 9:0, 27:0, 81:0};
+      let val = n;
+      let powers = [1, 3, 9, 27, 81];
+      for (let i = 0; i < 5; i++) {
+        let rem = val % 3;
+        if (rem === 1 || rem === -2) {
+          coef[powers[i]] = 1;
+          val = Math.floor((val - 1) / 3);
+        } else if (rem === -1 || rem === 2) {
+          coef[powers[i]] = -1;
+          val = Math.floor((val + 1) / 3);
+        } else {
+          coef[powers[i]] = 0;
+          val = Math.floor(val / 3);
+        }
+      }
+      return coef;
+    }
+
+    function encodeDstRecord(dx, dy, type) {
+      if (type === 'END') return [0x00, 0x00, 0xF3];
+
+      let x = getBalancedTernary(dx);
+      let y = getBalancedTernary(dy);
+
+      let b1 = 0, b2 = 0, b3 = 0x03;
+
+      if (type === 'JUMP') b3 |= 0x80;
+
+      if (x[1] === 1)  b1 |= (1 << 0);
+      if (x[1] === -1) b1 |= (1 << 1);
+      if (x[9] === 1)  b1 |= (1 << 2);
+      if (x[9] === -1) b1 |= (1 << 3);
+      if (y[9] === -1) b1 |= (1 << 4);
+      if (y[9] === 1)  b1 |= (1 << 5);
+      if (y[1] === -1) b1 |= (1 << 6);
+      if (y[1] === 1)  b1 |= (1 << 7);
+
+      if (x[3] === 1)  b2 |= (1 << 0);
+      if (x[3] === -1) b2 |= (1 << 1);
+      if (x[27] === 1) b2 |= (1 << 2);
+      if (x[27] === -1)b2 |= (1 << 3);
+      if (y[27] === -1)b2 |= (1 << 4);
+      if (y[27] === 1) b2 |= (1 << 5);
+      if (y[3] === -1) b2 |= (1 << 6);
+      if (y[3] === 1)  b2 |= (1 << 7);
+
+      if (x[81] === 1)  b3 |= (1 << 2);
+      if (x[81] === -1) b3 |= (1 << 3);
+      if (y[81] === -1) b3 |= (1 << 4);
+      if (y[81] === 1)  b3 |= (1 << 5);
+
+      return [b1, b2, b3];
+    }
+
+    saveDstBtn.addEventListener('click', () => {
+      if (strokes.length === 0) {
+        alert("Dayachesi munduga Image upload cheyandi ledha Canvas pai geeyandi!");
+        return;
+      }
+
+      let records = [];
+      let currentX = 0, currentY = 0;
+      let minX = 0, maxX = 0, minY = 0, maxY = 0;
+      let stitchCount = 0;
+
+      function addStep(dx, dy, command) {
+        while (Math.abs(dx) > 120 || Math.abs(dy) > 120) {
+          let stepX = Math.max(-120, Math.min(120, dx));
+          let stepY = Math.max(-120, Math.min(120, dy));
+          records.push(encodeDstRecord(stepX, stepY, command));
+          dx -= stepX; dy -= stepY;
+          currentX += stepX; currentY += stepY;
+          stitchCount++;
+          minX = Math.min(minX, currentX); maxX = Math.max(maxX, currentX);
+          minY = Math.min(minY, currentY); maxY = Math.max(maxY, currentY);
+        }
+        records.push(encodeDstRecord(dx, dy, command));
+        currentX += dx; currentY += dy;
+        stitchCount++;
+        minX = Math.min(minX, currentX); maxX = Math.max(maxX, currentX);
+        minY = Math.min(minY, currentY); maxY = Math.max(maxY, currentY);
+      }
+
+      let scale = 2.0;
+      let centerX = canvas.width / 2;
+      let centerY = canvas.height / 2;
+
+      for (let stroke of strokes) {
+        if (!stroke || stroke.length === 0) continue;
+
+        let targetX = Math.round((stroke[0].x - centerX) * scale);
+        let targetY = Math.round((centerY - stroke[0].y) * scale);
+
+        addStep(targetX - currentX, targetY - currentY, 'JUMP');
+
+        for (let i = 1; i < stroke.length; i++) {
+          let ptX = Math.round((stroke[i].x - centerX) * scale);
+          let ptY = Math.round((centerY - stroke[i].y) * scale);
+          let dx = ptX - currentX;
+          let dy = ptY - currentY;
+
+          if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
+            addStep(dx, dy, 'STITCH');
+          }
+        }
+      }
+
+      records.push([0x00, 0x00, 0xF3]);
+      stitchCount++;
+
+      let headerText = 
+        "LA:EMBROIDERY_DESIGN\r" +
+        "ST:" + ("0000000" + stitchCount).slice(-7) + "\r" +
+        "CO:000\r" +
+        "+X:" + ("00000" + Math.abs(Math.round(maxX))).slice(-5) + "\r" +
+        "-X:" + ("00000" + Math.abs(Math.round(minX))).slice(-5) + "\r" +
+        "+Y:" + ("00000" + Math.abs(Math.round(maxY))).slice(-5) + "\r" +
+        "-Y:" + ("00000" + Math.abs(Math.round(minY))).slice(-5) + "\r" +
+        "AX:+00000\rAY:+00000\rMX:+00000\rMY:+00000\rPD:******\r";
+
+      let buffer = new Uint8Array(512 + records.length * 3);
+      buffer.fill(0x20, 0, 512);
+
+      for (let i = 0; i < headerText.length; i++) {
+        buffer[i] = headerText.charCodeAt(i);
+      }
+
+      let offset = 512;
+      for (let r of records) {
+        buffer[offset] = r[0];
+        buffer[offset + 1] = r[1];
+        buffer[offset + 2] = r[2];
+        offset += 3;
+      }
+
+      const blob = new Blob([buffer], { type: "application/octet-stream" });
+      const link = document.createElement('a');
+      link.download = 'image_embroidery.dst';
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+      statusDiv.textContent = "✅ .DST Embroidery File Download ayindi!";
+    });
+  </script>
+
+</body>
+</html>

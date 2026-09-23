@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DST Design Viewer - Rudhrani Ladies Tailor & Embroidery</title>
+  <style>
+    :root {
+      --primary: #8a1239;
+      --primary-dark: #5c0b25;
+      --gold: #b8860b;
+      --bg: #ffffff;
+      --card-bg: #f9f9fb;
+      --text: #1a1a1a;
+      --text-muted: #666666;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding-bottom: 60px;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      padding: 18px;
+      text-align: center;
+      border-bottom: 3px solid var(--gold);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      color: #ffffff;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: #f1f5f9;
+      margin-top: 2px;
+    }
+
+    /* Control Panel Bar */
+    .controls-bar {
+      background: #f1f5f9;
+      padding: 12px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .folder-btn-wrapper {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 600;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+
+    #folderInput {
+      display: none;
+    }
+
+    /* Search Bar Section */
+    .search-container {
+      position: relative;
+      flex: 1;
+      min-width: 260px;
+      max-width: 450px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 9px 36px 9px 36px;
+      border-radius: 20px;
+      border: 1.5px solid #cbd5e1;
+      outline: none;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(138, 18, 57, 0.15);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+      font-size: 0.9rem;
+      pointer-events: none;
+    }
+
+    .clear-search-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: none;
+    }
+
+    .clear-search-btn:hover {
+      color: #0f172a;
+    }
+
+    /* Fast Scroll Controller Bar */
+    .fast-scroll-bar {
+      background: #ffffff;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      position: sticky;
+      top: 72px;
+      z-index: 90;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .fast-scroll-bar label {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .fast-scroll-bar input[type="range"] {
+      width: 100%;
+      height: 8px;
+      border-radius: 5px;
+      background: #e2e8f0;
+      outline: none;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .quick-jump-btns {
+      display: flex;
+      gap: 5px;
+    }
+
+    .quick-jump-btns button {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+
+    .quick-jump-btns button:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+
+    .empty-state h2 {
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    /* Gallery Grid */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    /* Design Card */
+    .design-card {
+      background-color: var(--card-bg);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .design-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Vector SVG Preview Container */
+    .design-preview {
+      position: relative;
+      width: 100%;
+      height: 260px;
+      background-color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+      cursor: zoom-in;
+    }
+
+    .design-preview svg {
+      width: 90%;
+      height: 90%;
+      pointer-events: none;
+    }
+
+    /* Opposite Color Edge Watermark */
+    .watermark-edge {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      font-size: 8px;
+      font-weight: 800;
+      color: #000000;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      pointer-events: none;
+      user-select: none;
+      transform: rotate(-3deg);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #1a1a1a;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      text-align: right;
+      max-width: 85%;
+      line-height: 1.2;
+      z-index: 5;
+    }
+
+    .zoom-hint {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(138, 18, 57, 0.1);
+      color: var(--primary);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      pointer-events: none;
+    }
+
+    /* DST Details */
+    .card-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-grow: 1;
+    }
+
+    .design-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0f172a;
+      word-break: break-all;
+    }
+
+    /* Highlight Search Text */
+    mark {
+      background-color: #fef08a;
+      color: #854d0e;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+
+    .specs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: #f1f5f9;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .spec-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .spec-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .spec-value {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .btn-share {
+      background: #ffffff;
+      border: 1.5px solid var(--primary);
+      color: var(--primary);
+      padding: 7px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.8rem;
+      flex: 1;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .btn-share:hover {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--primary-dark);
+      color: #ffffff;
+      padding: 10px 24px;
+      border-radius: 30px;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 1000;
+    }
+
+    /* Floating Fast Scroll Sidebar */
+    .side-scrubber {
+      position: fixed;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 20px;
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 99;
+    }
+
+    .side-scrubber button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .status-text {
+      font-size: 0.85rem;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    /* Full-Screen Zoom Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      flex-direction: column;
+    }
+
+    .modal-content {
+      width: 90vw;
+      height: 80vh;
+      background: #ffffff;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: grab;
+    }
+
+    .modal-content svg {
+      width: 100%;
+      height: 100%;
+      transition: transform 0.1s ease-out;
+    }
+
+    .modal-controls {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 8px;
+      z-index: 2100;
+    }
+
+    .modal-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .modal-btn-close {
+      background: #dc2626;
+    }
+
+    .modal-watermark {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      background: #ffffff;
+      color: #000;
+      padding: 6px 12px;
+      border: 1px solid #000;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 2100;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <h1>Rudhrani Ladies Tailor & Embroidery</h1>
+    <p>Market Area, Gandhi Nagar | Ultra-HD DST Viewer</p>
+  </header>
+
+  <!-- Control Bar with Search -->
+  <div class="controls-bar">
+    <div class="folder-btn-wrapper">
+      <label class="btn" for="folderInput">
+        📁 Select DST Folder
+      </label>
+      <input type="file" id="folderInput" webkitdirectory directory multiple accept=".dst,.DST">
+      <button class="btn btn-danger" onclick="clearStoredDesigns()">🗑️ Clear</button>
+    </div>
+
+    <!-- Search Input -->
+    <div class="search-container">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search file name (e.g. neck, sleeve, 01)..." oninput="handleSearch()">
+      <button class="clear-search-btn" id="clearSearchBtn" onclick="clearSearch()" title="Clear Search">✖</button>
+    </div>
+
+    <div class="status-text" id="statusText">Stored Designs: 0</div>
+  </div>
+
+  <!-- Fast Scroll Bar Top -->
+  <div class="fast-scroll-bar">
+    <label for="scrollScrubber">⚡ Fast Scroll:</label>
+    <input type="range" id="scrollScrubber" min="0" value="0" step="1">
+    <div class="quick-jump-btns">
+      <button onclick="jumpToPercent(0)">Top</button>
+      <button onclick="jumpToPercent(50)">50%</button>
+      <button onclick="jumpToPercent(100)">End</button>
+    </div>
+  </div>
+
+  <!-- Floating Side Fast Scroll -->
+  <div class="side-scrubber">
+    <button onclick="jumpToPercent(0)">▲</button>
+    <span style="font-size:9px; font-weight: bold; color:var(--primary);">FAST</span>
+    <button onclick="jumpToPercent(100)">▼</button>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="container">
+    <div class="empty-state" id="emptyState">
+      <h2>No Designs Found</h2>
+      <p id="emptyStateMsg">Click <strong>"📁 Select DST Folder"</strong> to load your embroidery DST designs directly.</p>
+    </div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+  </div>
+
+  <!-- Fullscreen Zoom Modal -->
+  <div class="modal-overlay" id="zoomModal">
+    <div class="modal-controls">
+      <button class="modal-btn" onclick="adjustZoom(1.3)">🔍 +</button>
+      <button class="modal-btn" onclick="adjustZoom(0.7)">🔍 -</button>
+      <button class="modal-btn" onclick="resetZoom()">🔄 Reset</button>
+      <button class="modal-btn modal-btn-close" onclick="closeModal()">✕ Close</button>
+    </div>
+    <div class="modal-content" id="modalCanvasContainer"></div>
+    <div class="modal-watermark" id="modalWatermark">Rudhrani Ladies Tailor & Embroidery, market area gandhi nagar</div>
+  </div>
+
+  <!-- Share Toast Notification -->
+  <div class="toast" id="toast">Details copied to clipboard!</div>
+
+  <script>
+    const WATERMARK_TEXT = "Rudhrani Ladies Tailor & Embroidery, market area gandhi nagar";
+
+    // --- INDEXEDDB SETUP FOR PERSISTENCE ---
+    const DB_NAME = 'RudhraniDSTGalleryDB_VectorHD';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'dst_designs';
+    let db;
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          const dbInstance = e.target.result;
+          if (!dbInstance.objectStoreNames.contains(STORE_NAME)) {
+            dbInstance.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          }
+        };
+        request.onsuccess = (e) => {
+          db = e.target.result;
+          resolve(db);
+        };
+        request.onerror = (e) => reject(e);
+      });
+    }
+
+    function saveDesignsToDB(designsList) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        designsList.forEach(item => store.add(item));
+        tx.oncomplete = () => resolve();
+        tx.onerror = (e) => reject(e);
+      });
+    }
+
+    function getAllDesignsFromDB() {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = (e) => reject(e);
+      });
+    }
+
+    function clearAllDesignsFromDB() {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.clear();
+        tx.oncomplete = () => resolve();
+        tx.onerror = (e) => reject(e);
+      });
+    }
+
+    // --- VECTOR SVG DST PARSER ---
+    function parseAndRenderDST(buffer, fileName) {
+      const bytes = new Uint8Array(buffer);
+      
+      const headerText = new TextDecoder('ascii').decode(bytes.slice(0, 512));
+      let headerStitches = 0;
+      let headerCuttings = 0;
+
+      const stMatch = headerText.match(/ST:\s*(\d+)/i);
+      if (stMatch) headerStitches = parseInt(stMatch[1]);
+
+      const coMatch = headerText.match(/CO:\s*(\d+)/i);
+      if (coMatch) headerCuttings = parseInt(coMatch[1]);
+
+      let x = 0, y = 0;
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      let pathsSvg = [];
+      let currentPath = [];
+      let calculatedCuttings = 0;
+      let totalStitches = 0;
+
+      for (let i = 512; i < bytes.length - 2; i += 3) {
+        let b0 = bytes[i];
+        let b1 = bytes[i + 1];
+        let b2 = bytes[i + 2];
+
+        if (b0 === 0xF3 && b1 === 0x0D && b2 === 0x00) break;
+
+        let dx = 0, dy = 0;
+        if (b0 & 0x01) dx += 1;
+        if (b0 & 0x02) dx -= 1;
+        if (b0 & 0x04) dx += 9;
+        if (b0 & 0x08) dx -= 9;
+        if (b0 & 0x10) dy -= 9;
+        if (b0 & 0x20) dy += 9;
+        if (b0 & 0x40) dy -= 1;
+        if (b0 & 0x80) dy += 1;
+
+        if (b1 & 0x01) dx += 3;
+        if (b1 & 0x02) dx -= 3;
+        if (b1 & 0x04) dx += 27;
+        if (b1 & 0x08) dx -= 27;
+        if (b1 & 0x10) dy -= 27;
+        if (b1 & 0x20) dy += 27;
+        if (b1 & 0x40) dy -= 3;
+        if (b1 & 0x80) dy += 3;
+
+        if (b2 & 0x04) dx += 81;
+        if (b2 & 0x08) dx -= 81;
+        if (b2 & 0x10) dy -= 81;
+        if (b2 & 0x20) dy += 81;
+
+        x += dx;
+        y += dy;
+
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+
+        totalStitches++;
+
+        let ctrl = b2 & 0xF3;
+        if (ctrl === 0xF3 || ctrl === 0xC3) {
+          if (currentPath.length > 0) pathsSvg.push(currentPath);
+          currentPath = [];
+          if (ctrl === 0xC3) calculatedCuttings++;
+        } else {
+          currentPath.push(`${x},${y}`);
+        }
+      }
+      if (currentPath.length > 0) pathsSvg.push(currentPath);
+
+      const width = maxX - minX || 100;
+      const height = maxY - minY || 100;
+      const padding = Math.max(width, height) * 0.05;
+
+      const viewBox = `${minX - padding} ${minY - padding} ${width + padding * 2} ${height + padding * 2}`;
+      const strokeWidth = Math.max(width, height) * 0.003;
+
+      let svgPathData = pathsSvg.map(p => `M ${p.join(' L ')}`).join(' ');
+
+      const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet">
+        <path d="${svgPathData}" fill="none" stroke="#8a1239" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+
+      return {
+        fileName: fileName,
+        stitches: (headerStitches || totalStitches).toLocaleString(),
+        cuttings: headerCuttings || calculatedCuttings,
+        svgContent: svgContent
+      };
+    }
+
+    // --- MAIN APP LOGIC ---
+    let loadedDesigns = [];
+    let displayedDesigns = [];
+    const galleryGrid = document.getElementById('galleryGrid');
+    const scrollScrubber = document.getElementById('scrollScrubber');
+    const emptyState = document.getElementById('emptyState');
+    const emptyStateMsg = document.getElementById('emptyStateMsg');
+    const statusText = document.getElementById('statusText');
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await initDB();
+      await loadAndDisplayStoredDesigns();
+    });
+
+    // Handle Local Folder Input with Auto Duplicate Removal
+    document.getElementById('folderInput').addEventListener('change', async (e) => {
+      const allSelectedFiles = Array.from(e.target.files).filter(f => f.name.toLowerCase().endsWith('.dst'));
+
+      if (allSelectedFiles.length === 0) {
+        alert("No .DST files found in the selected folder!");
+        return;
+      }
+
+      // Retrieve existing stored design names to avoid duplicate imports
+      const existingDesigns = await getAllDesignsFromDB();
+      const existingFileNames = new Set(existingDesigns.map(d => d.fileName.toLowerCase().trim()));
+
+      // Deduplicate batch files (against existing DB + against other files in same batch)
+      const uniqueFilesToProcess = [];
+      const seenBatchNames = new Set();
+      let duplicateCount = 0;
+
+      for (let file of allSelectedFiles) {
+        const nameKey = file.name.toLowerCase().trim();
+        if (existingFileNames.has(nameKey) || seenBatchNames.has(nameKey)) {
+          duplicateCount++;
+        } else {
+          seenBatchNames.add(nameKey);
+          uniqueFilesToProcess.push(file);
+        }
+      }
+
+      if (uniqueFilesToProcess.length === 0) {
+        showToast(`All ${allSelectedFiles.length} files were duplicates and auto-removed!`);
+        statusText.innerText = `Stored Designs: ${existingDesigns.length}`;
+        e.target.value = ''; // Reset file input
+        return;
+      }
+
+      statusText.innerText = `Processing ${uniqueFilesToProcess.length} unique DST files...`;
+
+      const newParsedDesigns = [];
+      for (let file of uniqueFilesToProcess) {
+        try {
+          const buffer = await file.arrayBuffer();
+          const parsedData = parseAndRenderDST(buffer, file.name);
+          newParsedDesigns.push(parsedData);
+        } catch (err) {
+          console.error("Error reading file:", file.name, err);
+        }
+      }
+
+      if (newParsedDesigns.length > 0) {
+        await saveDesignsToDB(newParsedDesigns);
+      }
+
+      await loadAndDisplayStoredDesigns();
+      
+      let msg = `Loaded ${newParsedDesigns.length} new design(s)!`;
+      if (duplicateCount > 0) {
+        msg += ` (${duplicateCount} duplicate(s) auto-removed)`;
+      }
+      showToast(msg);
+      e.target.value = ''; // Reset file input
+    });
+
+    // Load stored designs from DB & display (Auto-purges any legacy duplicates from DB)
+    async function loadAndDisplayStoredDesigns() {
+      const allStored = await getAllDesignsFromDB();
+      
+      // Filter out duplicate entries if present in legacy IndexedDB
+      const seenNames = new Set();
+      const uniqueStored = [];
+      let foundDuplicatesInDB = false;
+
+      for (let item of allStored) {
+        const key = item.fileName.toLowerCase().trim();
+        if (seenNames.has(key)) {
+          foundDuplicatesInDB = true;
+        } else {
+          seenNames.add(key);
+          uniqueStored.push(item);
+        }
+      }
+
+      // If legacy DB had duplicates, clean up DB
+      if (foundDuplicatesInDB) {
+        await clearAllDesignsFromDB();
+        await saveDesignsToDB(uniqueStored);
+      }
+
+      loadedDesigns = uniqueStored;
+      handleSearch(); // Applies filter or renders all
+    }
+
+    // --- SEARCH FEATURE (Matches Even Middle Letters) ---
+    function handleSearch() {
+      const query = searchInput.value.trim().toLowerCase();
+      
+      if (query.length > 0) {
+        clearSearchBtn.style.display = 'block';
+        // Substring match: matches anywhere in the filename
+        displayedDesigns = loadedDesigns.filter(d => d.fileName.toLowerCase().includes(query));
+      } else {
+        clearSearchBtn.style.display = 'none';
+        displayedDesigns = [...loadedDesigns];
+      }
+
+      statusText.innerText = query ? `Found: ${displayedDesigns.length} of ${loadedDesigns.length}` : `Stored Designs: ${loadedDesigns.length}`;
+
+      renderGalleryGrid(query);
+    }
+
+    function clearSearch() {
+      searchInput.value = '';
+      handleSearch();
+      searchInput.focus();
+    }
+
+    function renderGalleryGrid(query = '') {
+      if (displayedDesigns.length === 0) {
+        emptyState.style.display = 'block';
+        if (loadedDesigns.length === 0) {
+          emptyStateMsg.innerHTML = 'Click <strong>"📁 Select DST Folder"</strong> to load your embroidery DST designs directly.';
+        } else {
+          emptyStateMsg.innerHTML = `No designs match your search "<strong>${query}</strong>". Try another keyword.`;
+        }
+        galleryGrid.innerHTML = '';
+        scrollScrubber.max = 0;
+        return;
+      }
+
+      emptyState.style.display = 'none';
+
+      galleryGrid.innerHTML = displayedDesigns.map((design, index) => {
+        // Highlight matched characters in the title
+        let highlightedTitle = design.fileName;
+        if (query) {
+          const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+          highlightedTitle = design.fileName.replace(regex, '<mark>$1</mark>');
+        }
+
+        return `
+          <div class="design-card" id="design-${index}">
+            <div class="design-preview" onclick="openZoomModal(${index})" title="Click to open Fullscreen HD Zoom">
+              <span class="zoom-hint">🔍 Tap to Zoom</span>
+              ${design.svgContent}
+              <div class="watermark-edge">${WATERMARK_TEXT}</div>
+            </div>
+            
+            <div class="card-body">
+              <div class="design-title" title="${design.fileName}">${highlightedTitle}</div>
+              
+              <div class="specs-grid">
+                <div class="spec-item">
+                  <span class="spec-label">🧵 Stitches</span>
+                  <span class="spec-value">${design.stitches}</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-label">✂️ Cuttings</span>
+                  <span class="spec-value">${design.cuttings} cuts</span>
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <button class="btn-share" onclick="shareDesign('${design.fileName}', '${design.stitches}', '${design.cuttings}')">
+                  🔗 Share Design
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      scrollScrubber.max = displayedDesigns.length > 0 ? displayedDesigns.length - 1 : 0;
+      scrollScrubber.value = 0;
+    }
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // --- FULLSCREEN ZOOM MODAL CONTROLS ---
+    let currentZoomScale = 1;
+    const zoomModal = document.getElementById('zoomModal');
+    const modalCanvasContainer = document.getElementById('modalCanvasContainer');
+
+    function openZoomModal(index) {
+      const design = displayedDesigns[index];
+      if (!design) return;
+
+      modalCanvasContainer.innerHTML = design.svgContent;
+      currentZoomScale = 1;
+      applyZoomTransform();
+      zoomModal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      zoomModal.style.display = 'none';
+      modalCanvasContainer.innerHTML = '';
+    }
+
+    function adjustZoom(factor) {
+      currentZoomScale *= factor;
+      if (currentZoomScale < 0.5) currentZoomScale = 0.5;
+      if (currentZoomScale > 20) currentZoomScale = 20;
+      applyZoomTransform();
+    }
+
+    function resetZoom() {
+      currentZoomScale = 1;
+      applyZoomTransform();
+    }
+
+    function applyZoomTransform() {
+      const svg = modalCanvasContainer.querySelector('svg');
+      if (svg) {
+        svg.style.transform = `scale(${currentZoomScale})`;
+      }
+    }
+
+    // Clear Storage
+    async function clearStoredDesigns() {
+      if (confirm("Are you sure you want to delete all stored DST designs?")) {
+        await clearAllDesignsFromDB();
+        searchInput.value = '';
+        await loadAndDisplayStoredDesigns();
+        showToast("Storage cleared!");
+      }
+    }
+
+    // Fast Scroll Scrubber Event
+    scrollScrubber.addEventListener('input', (e) => {
+      const index = e.target.value;
+      const targetCard = document.getElementById(`design-${index}`);
+      if (targetCard) {
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+
+    // Jump to percentage
+    function jumpToPercent(percent) {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const targetPosition = (maxScroll * percent) / 100;
+      window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+      
+      const targetIndex = Math.round(((displayedDesigns.length - 1) * percent) / 100);
+      scrollScrubber.value = targetIndex || 0;
+    }
+
+    // Share Option
+    async function shareDesign(fileName, stitches, cuttings) {
+      const textDetails = `Rudhrani Ladies Tailor & Embroidery\nMarket Area, Gandhi Nagar\n\nDesign: ${fileName}\n🧵 Stitches: ${stitches}\n✂️ Cuttings: ${cuttings}`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `DST Design - ${fileName}`,
+            text: textDetails,
+            url: window.location.href
+          });
+        } catch (err) {}
+      } else {
+        navigator.clipboard.writeText(textDetails);
+        showToast("Design details copied to clipboard!");
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.innerText = message;
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 3000);
+    }
+  </script>
+</body>
+</html>
